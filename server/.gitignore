@@ -1,7 +1,7 @@
 # Node modules
-node_modules
+node_modules/
 
 # pnpm
 .pnp.cjs
 .pnp.loader.mjs
-.pnpm-store
+.pnpm-store/
