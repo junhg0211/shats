@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { WHITE_NORMAL, YELLOW_NORMAL, WHITE_JATSHIE, YELLOW_JATSHIE, NONE } from "$lib/consts";
+    import { WHITE_NORMAL, YELLOW_NORMAL, WHITE_JATSHIE, YELLOW_JATSHIE, NONE } from "../../../../consts";
 
     export let value: string;
     export let row: number;

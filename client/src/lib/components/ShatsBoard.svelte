@@ -1,12 +1,14 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import Grasoosha from "./Grasoosha.svelte";
-    import { NONE, WHITE_NORMAL, YELLOW_NORMAL } from "$lib/consts";
+    import { NONE, WHITE_JATSHIE, WHITE_NORMAL, YELLOW_NORMAL, YELLOW_JATSHIE } from "../../../../consts";
     import nema1 from "$lib/assets/wav/nema1.wav";
     import nema2 from "$lib/assets/wav/nema2.wav";
     import nema3 from "$lib/assets/wav/nema3.wav";
     import nema4 from "$lib/assets/wav/nema4.wav";
     import nema5 from "$lib/assets/wav/nema5.wav";
+
+    export let socket: WebSocket;
 
     let sounds: HTMLAudioElement[] = [];
 
@@ -19,6 +21,40 @@
         [YELLOW_NORMAL, YELLOW_NORMAL, YELLOW_NORMAL, YELLOW_NORMAL, YELLOW_NORMAL, YELLOW_NORMAL, YELLOW_NORMAL],
         [NONE, YELLOW_NORMAL, YELLOW_NORMAL, YELLOW_NORMAL, YELLOW_NORMAL, YELLOW_NORMAL, NONE],
     ];
+
+    function moveGrasoosha(fromRow: number, fromCol: number, toRow: number, toCol: number) {
+        if (content[fromRow][fromCol] !== NONE) {
+            content[toRow][toCol] = content[fromRow][fromCol];
+            content[fromRow][fromCol] = NONE;
+            content = content;
+        }
+
+        for (let i = 1; i < 7; i++) {
+            for (let j = 0; j < 7; j++) {
+                if (content[i][j] === NONE) continue;
+
+                const color = (content[i][j] === WHITE_NORMAL || content[i][j] === WHITE_JATSHIE) ? 'W' : 'Y';
+
+                let diagonalNeighbors = 0;
+                const directions = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+                for (const [dx, dy] of directions) {
+                    const ni = i + dx;;
+                    const nj = j + dy;
+                    if (ni < 0 || ni >= 7 || nj < 0 || nj >= 7) continue;
+                    if (content[ni][nj] === NONE) continue;
+                    const neighborColor = (content[ni][nj] === WHITE_NORMAL || content[ni][nj] === WHITE_JATSHIE) ? 'W' : 'Y';
+                    if (neighborColor !== color) continue;
+                    diagonalNeighbors++;
+                }
+
+                if (diagonalNeighbors >= 3) {
+                    content[i][j] = color === 'W' ? WHITE_JATSHIE : YELLOW_JATSHIE;
+                } else {
+                    content[i][j] = color === 'W' ? WHITE_NORMAL : YELLOW_NORMAL;
+                }
+            }
+        }
+    }
 
     let draggedFrom: { row: number; col: number } | null = null;
     let dragPosition = { x: 0, y: 0 };
@@ -75,25 +111,27 @@
         const fromRow = draggedFrom.row;
         const fromCol = draggedFrom.col;
 
-        if (fromRow !== toRow || fromCol !== toCol) {
-            if (content[fromRow][fromCol] !== NONE) {
-                content[toRow][toCol] = content[fromRow][fromCol];
-                content[fromRow][fromCol] = NONE;
-                content = content;
-
-                const randomIndex = Math.floor(Math.random() * sounds.length);
-                const sound = sounds[randomIndex];
-                sound.currentTime = 0;
-                sound.play();
-            }
-        } else {
-            if (movingPieceElement) {
-                movingPieceElement.style.opacity = '1';
-                movingPieceElement = null;
-            }
+        if ((fromRow !== toRow || fromCol !== toCol) && content[fromRow][fromCol] !== NONE) {
+            socket.send(`move\t${fromRow}\t${fromCol}\t${toRow}\t${toCol}`);
         }
 
+        movingPieceElement!.style.opacity = '1';
+        movingPieceElement = null;
+
         resetDragState();
+    }
+
+    function handleMoveEvent(event: CustomEvent) {
+        const { fromRow, fromCol, toRow, toCol } = event.detail;
+
+        if (content[fromRow][fromCol] !== NONE) {
+            moveGrasoosha(fromRow, fromCol, toRow, toCol);
+
+            const randomIndex = Math.floor(Math.random() * sounds.length);
+            const sound = sounds[randomIndex];
+            sound.currentTime = 0;
+            sound.play();
+        }
     }
 
     onMount(() => {
@@ -105,10 +143,12 @@
         
         window.addEventListener('mousemove', handleWindowMouseMove);
         window.addEventListener('mouseup', handleWindowMouseUp);
+        window.addEventListener('move', handleMoveEvent as EventListener);
 
         return () => {
             window.removeEventListener('mousemove', handleWindowMouseMove);
             window.removeEventListener('mouseup', handleWindowMouseUp);
+            window.removeEventListener('move', handleMoveEvent as EventListener);
         };
     });
 </script>

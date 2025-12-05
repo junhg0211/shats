@@ -1,8 +1,8 @@
 {
 	"type": "module",
 	"scripts": {
-		"start": "node --import 'data:text/javascript,import { register } from \"node:module\"; import { pathToFileURL } from \"node:url\"; register(\"ts-node/esm\", pathToFileURL(\"./\"));' index.ts",
-		"dev": "nodemon --watch './**/*.ts' --exec 'node --import \"data:text/javascript,import { register } from \"node:module\"; import { pathToFileURL } from \"node:url\"; register(\"ts-node/esm\", pathToFileURL(\"./\"));\"' index.ts"
+		"start": "tsx index.ts",
+		"dev": "tsx watch index.ts"
 	},
 	"dependencies": {
 		"websocket": "^1.0.35"
@@ -10,8 +10,8 @@
 	"devDependencies": {
 		"@types/node": "^20.5.9",
 		"@types/websocket": "^1.0.10",
-		"nodemon": "^3.1.11",
 		"ts-node": "^10.9.1",
+		"tsx": "^4.21.0",
 		"typescript": "^5.9.3"
 	}
 }
