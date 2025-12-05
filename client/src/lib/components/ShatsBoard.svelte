@@ -21,8 +21,30 @@
         [NONE, NONE, NONE, NONE, NONE, NONE, NONE],
         [NONE, NONE, NONE, NONE, NONE, NONE, NONE],
     ];
+    let flipped = false;
+
+    function flipBoard() {
+        flipped = !flipped;
+
+        const newContent = Array(7).fill(null).map(() => Array(7).fill(NONE));
+        for (let i = 0; i < 7; i++) {
+            for (let j = 0; j < 7; j++) {
+                newContent[6 - i][6 - j] = content[i][j];
+            }
+        }
+        content = newContent;
+    }
 
     function moveGrasoosha(fromRow: number, fromCol: number, toRow: number, toCol: number) {
+        if (fromRow < 0 || fromRow >= 7 || fromCol < 0 || fromCol >= 7) return;
+        if (toRow < 0 || toRow >= 7 || toCol < 0 || toCol >= 7) return;
+        if (flipped) {
+            fromRow = 6 - fromRow;
+            fromCol = 6 - fromCol;
+            toRow = 6 - toRow;
+            toCol = 6 - toCol;
+        }
+
         if (content[fromRow][fromCol] !== NONE) {
             content[toRow][toCol] = content[fromRow][fromCol];
             content[fromRow][fromCol] = NONE;
@@ -112,13 +134,21 @@
         const fromCol = draggedFrom.col;
 
         if ((fromRow !== toRow || fromCol !== toCol) && content[fromRow][fromCol] !== NONE) {
-            socket.send(`move\t${fromRow}\t${fromCol}\t${toRow}\t${toCol}`);
+            if (flipped) {
+                moveGrasoosha(6 - fromRow, 6 - fromCol, 6 - toRow, 6 - toCol);
+            } else {
+                moveGrasoosha(fromRow, fromCol, toRow, toCol);
+            }
         }
 
         movingPieceElement!.style.opacity = '1';
         movingPieceElement = null;
 
         resetDragState();
+    }
+
+    function handleDblClick() {
+        flipBoard();
     }
 
     function handleMoveEvent(event: CustomEvent) {
@@ -148,12 +178,14 @@
         
         window.addEventListener('mousemove', handleWindowMouseMove);
         window.addEventListener('mouseup', handleWindowMouseUp);
+        window.addEventListener('dblclick', handleDblClick);
         window.addEventListener('move', handleMoveEvent as EventListener);
         window.addEventListener('board', handleBoardEvent as EventListener);
 
         return () => {
             window.removeEventListener('mousemove', handleWindowMouseMove);
             window.removeEventListener('mouseup', handleWindowMouseUp);
+            window.removeEventListener('dblclick', handleDblClick);
             window.removeEventListener('move', handleMoveEvent as EventListener);
             window.removeEventListener('board', handleBoardEvent as EventListener);
         };
