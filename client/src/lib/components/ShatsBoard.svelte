@@ -13,13 +13,13 @@
     let sounds: HTMLAudioElement[] = [];
 
     let content = [
-        [NONE, WHITE_NORMAL, WHITE_NORMAL, WHITE_NORMAL, WHITE_NORMAL, WHITE_NORMAL, NONE],
-        [WHITE_NORMAL, WHITE_NORMAL, WHITE_NORMAL, WHITE_NORMAL, WHITE_NORMAL, WHITE_NORMAL, WHITE_NORMAL],
         [NONE, NONE, NONE, NONE, NONE, NONE, NONE],
         [NONE, NONE, NONE, NONE, NONE, NONE, NONE],
         [NONE, NONE, NONE, NONE, NONE, NONE, NONE],
-        [YELLOW_NORMAL, YELLOW_NORMAL, YELLOW_NORMAL, YELLOW_NORMAL, YELLOW_NORMAL, YELLOW_NORMAL, YELLOW_NORMAL],
-        [NONE, YELLOW_NORMAL, YELLOW_NORMAL, YELLOW_NORMAL, YELLOW_NORMAL, YELLOW_NORMAL, NONE],
+        [NONE, NONE, NONE, NONE, NONE, NONE, NONE],
+        [NONE, NONE, NONE, NONE, NONE, NONE, NONE],
+        [NONE, NONE, NONE, NONE, NONE, NONE, NONE],
+        [NONE, NONE, NONE, NONE, NONE, NONE, NONE],
     ];
 
     function moveGrasoosha(fromRow: number, fromCol: number, toRow: number, toCol: number) {
@@ -133,6 +133,11 @@
             sound.play();
         }
     }
+    
+    function handleBoardEvent(event: CustomEvent) {
+        const { board } = event.detail;
+        content = board;
+    }
 
     onMount(() => {
         sounds = [new Audio(nema1), new Audio(nema2), new Audio(nema3), new Audio(nema4), new Audio(nema5)];
@@ -144,11 +149,13 @@
         window.addEventListener('mousemove', handleWindowMouseMove);
         window.addEventListener('mouseup', handleWindowMouseUp);
         window.addEventListener('move', handleMoveEvent as EventListener);
+        window.addEventListener('board', handleBoardEvent as EventListener);
 
         return () => {
             window.removeEventListener('mousemove', handleWindowMouseMove);
             window.removeEventListener('mouseup', handleWindowMouseUp);
             window.removeEventListener('move', handleMoveEvent as EventListener);
+            window.removeEventListener('board', handleBoardEvent as EventListener);
         };
     });
 </script>

@@ -26,6 +26,21 @@
                 window.dispatchEvent(moveEvent);
             },
         },
+        {
+            prefix: "board",
+            handler: (connection: WebSocket, args: string[]) => {
+                const [rawBoard] = args;
+                const board = JSON.parse(rawBoard);
+
+                // Handle the board update logic here
+                const boardEvent = new CustomEvent("board", {
+                    detail: {
+                        board,
+                    },
+                });
+                window.dispatchEvent(boardEvent);
+            },
+        }
     ]
 
     onMount(() => {
@@ -40,6 +55,10 @@
                     break;
                 }
             }
+        };
+
+        socket.onopen = () => {
+            socket.send('load')
         };
     });
 </script>

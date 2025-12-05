@@ -46,6 +46,12 @@ const protocols = [
       
       announce(`move\t${fromRow}\t${fromCol}\t${toRow}\t${toCol}`);
     }
+  },
+  {
+    prefix: "load",
+    handler: (connection: connection, args: string[]) => {
+      connection.sendUTF(`board\t${JSON.stringify(board)}`);
+    }
   }
 ]
 
