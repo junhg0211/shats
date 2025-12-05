@@ -15,14 +15,7 @@
                 const toCol = parseInt(rawToCol);
 
                 // Handle the move logic here
-                const moveEvent = new CustomEvent("move", {
-                    detail: {
-                        fromRow,
-                        fromCol,
-                        toRow,
-                        toCol,
-                    },
-                });
+                const moveEvent = new CustomEvent("move", { detail: { fromRow, fromCol, toRow, toCol } });
                 window.dispatchEvent(moveEvent);
             },
         },
