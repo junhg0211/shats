@@ -3,7 +3,7 @@
     import Grasoosha from "./Grasoosha.svelte";
     import { NONE, WHITE_JATSHIE, WHITE_NORMAL, YELLOW_NORMAL, YELLOW_JATSHIE, ROLE_LAPACH, ROLE_POTYSIN, ROLE_PYRITS, ROLE_HADRIV, ROLE_JATSHIE } from "../../../../consts";
 
-    export let socket: WebSocket;
+    export let socket: WebSocket | null = null;
 
     let content = [
         [NONE, NONE, NONE, NONE, NONE, NONE, NONE],
@@ -162,10 +162,19 @@
         const fromCol = draggedFrom.col;
 
         if ((fromRow !== toRow || fromCol !== toCol) && content[fromRow][fromCol] !== NONE) {
-            if (flipped) {
-                socket.send(`move\t${6 - fromRow}\t${6 - fromCol}\t${6 - toRow}\t${6 - toCol}`);
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                if (flipped) {
+                    socket.send(`move\t${6 - fromRow}\t${6 - fromCol}\t${6 - toRow}\t${6 - toCol}`);
+                } else {
+                    socket.send(`move\t${fromRow}\t${fromCol}\t${toRow}\t${toCol}`);
+                }
             } else {
-                socket.send(`move\t${fromRow}\t${fromCol}\t${toRow}\t${toCol}`);
+                // 오프라인 모드: 로컬에서만 이동
+                if (flipped) {
+                    moveGrasoosha(6 - fromRow, 6 - fromCol, 6 - toRow, 6 - toCol);
+                } else {
+                    moveGrasoosha(fromRow, fromCol, toRow, toCol);
+                }
             }
         }
 
@@ -245,7 +254,6 @@
         flex-direction: column;
         border: 2px solid #19191e;
         width: max-content;
-        margin: 20px auto;
         position: relative;
         user-select: none;
     }
