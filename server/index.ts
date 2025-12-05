@@ -1,6 +1,6 @@
 import { connection, server as WebSocketServer } from "websocket";
 import http from "http";
-import { WHITE_NORMAL, YELLOW_NORMAL, NONE } from "../consts";
+import { WHITE_NORMAL, YELLOW_NORMAL, NONE, YELLOW_JATSHIE } from "../consts";
 
 const PORT = 48828;
 
@@ -24,6 +24,7 @@ function announce(message: string) {
   wsServer.connections.forEach((connection) => {
     connection.sendUTF(message);
   });
+  console.log(`Announce: ${message}`);
 }
 
 // define protocols
@@ -40,6 +41,10 @@ const protocols = [
       if (fromRow < 0 || fromRow >= 7 || fromCol < 0 || fromCol >= 7) return;
       if (toRow < 0 || toRow >= 7 || toCol < 0 || toCol >= 7) return;
       if (board[fromRow][fromCol] === NONE) return;
+      
+      const fromColor = board[fromRow][fromCol] === YELLOW_NORMAL || board[fromRow][fromCol] === YELLOW_JATSHIE ? "Y" : board[fromRow][fromCol] === NONE ? "N" : "W";
+      const toColor = board[toRow][toCol] === YELLOW_NORMAL || board[toRow][toCol] === YELLOW_JATSHIE ? "Y" : board[toRow][toCol] === NONE ? "N" : "W";
+      if (fromColor === toColor) return;
 
       board[toRow][toCol] = board[fromRow][fromCol];
       board[fromRow][fromCol] = NONE;

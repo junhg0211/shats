@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import Grasoosha from "./Grasoosha.svelte";
-    import { NONE, WHITE_JATSHIE, WHITE_NORMAL, YELLOW_NORMAL, YELLOW_JATSHIE } from "../../../../consts";
+    import { NONE, WHITE_JATSHIE, WHITE_NORMAL, YELLOW_NORMAL, YELLOW_JATSHIE, ROLE_LAPACH, ROLE_POTYSIN, ROLE_PYRITS, ROLE_HADRIV, ROLE_JATSHIE } from "../../../../consts";
 
     export let socket: WebSocket;
 
@@ -15,6 +15,7 @@
         [NONE, NONE, NONE, NONE, NONE, NONE, NONE],
     ];
     let flipped = false;
+    let roles: string[][][] = Array(7).fill(null).map(() => Array(7).fill([]));
 
     function flipBoard() {
         flipped = !flipped;
@@ -26,13 +27,17 @@
             }
         }
         content = newContent;
+
+        checkRoles();
     }
 
-    function checkJatshie() {
-        for (let i = 1; i < 7; i++) {
+    function checkRoles() {
+        for (let i = 0; i < 7; i++) {
             for (let j = 0; j < 7; j++) {
+                roles[i][j] = [];
                 if (content[i][j] === NONE) continue;
 
+                // JATSHIE
                 const color = (content[i][j] === WHITE_NORMAL || content[i][j] === WHITE_JATSHIE) ? 'W' : 'Y';
 
                 let diagonalNeighbors = 0;
@@ -49,8 +54,43 @@
 
                 if (diagonalNeighbors >= 3) {
                     content[i][j] = color === 'W' ? WHITE_JATSHIE : YELLOW_JATSHIE;
+                    roles[i][j].push(ROLE_JATSHIE);
                 } else {
                     content[i][j] = color === 'W' ? WHITE_NORMAL : YELLOW_NORMAL;
+                }
+
+                // LAPACH
+                if (!flipped && (color === "Y" && i < 3 || color === "W" && i > 3)) {
+                    roles[i][j].push(ROLE_LAPACH);
+                }
+                if (flipped && (color === "Y" && i > 3 || color === "W" && i < 3)) {
+                    roles[i][j].push(ROLE_LAPACH);
+                }
+
+                // POTYSIN
+                let orthoNeighbors = 0;
+                const orthoDirections = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+                for (const [dx, dy] of orthoDirections) {
+                    const ni = i + dx;
+                    const nj = j + dy;
+                    if (ni < 0 || ni >= 7 || nj < 0 || nj >= 7) continue;
+                    if (content[ni][nj] === NONE) continue;
+                    const neighborColor = (content[ni][nj] === WHITE_NORMAL || content[ni][nj] === WHITE_JATSHIE) ? 'W' : 'Y';
+                    if (neighborColor !== color) continue;
+                    orthoNeighbors++;
+                }
+                if (orthoNeighbors + diagonalNeighbors >= 3) {
+                    roles[i][j].push(ROLE_POTYSIN);
+                }
+
+                // PYRITS
+                if (i === 0 || i === 6 || j === 0 || j === 6) {
+                    roles[i][j].push(ROLE_PYRITS);
+                }
+
+                // HADRIV
+                if (orthoNeighbors >= 1) {
+                    roles[i][j].push(ROLE_HADRIV);
                 }
             }
         }
@@ -59,20 +99,11 @@
     function moveGrasoosha(fromRow: number, fromCol: number, toRow: number, toCol: number) {
         if (fromRow < 0 || fromRow >= 7 || fromCol < 0 || fromCol >= 7) return;
         if (toRow < 0 || toRow >= 7 || toCol < 0 || toCol >= 7) return;
-        if (flipped) {
-            fromRow = 6 - fromRow;
-            fromCol = 6 - fromCol;
-            toRow = 6 - toRow;
-            toCol = 6 - toCol;
-        }
 
-        if (content[fromRow][fromCol] !== NONE) {
-            content[toRow][toCol] = content[fromRow][fromCol];
-            content[fromRow][fromCol] = NONE;
-            content = content;
-        }
-
-        checkJatshie();
+        content[toRow][toCol] = content[fromRow][fromCol];
+        content[fromRow][fromCol] = NONE;
+        content = content;
+        checkRoles();
     }
 
     let draggedFrom: { row: number; col: number } | null = null;
@@ -84,7 +115,7 @@
 
     function handleDragStart(row: number, col: number, e: DragEvent) {
         const target = e.target as HTMLElement;
-        target.style.opacity = '0.25';
+        target.style.display = 'none';
         movingPieceElement = target;
 
         draggedFrom = { row, col };
@@ -132,13 +163,13 @@
 
         if ((fromRow !== toRow || fromCol !== toCol) && content[fromRow][fromCol] !== NONE) {
             if (flipped) {
-                moveGrasoosha(6 - fromRow, 6 - fromCol, 6 - toRow, 6 - toCol);
+                socket.send(`move\t${6 - fromRow}\t${6 - fromCol}\t${6 - toRow}\t${6 - toCol}`);
             } else {
-                moveGrasoosha(fromRow, fromCol, toRow, toCol);
+                socket.send(`move\t${fromRow}\t${fromCol}\t${toRow}\t${toCol}`);
             }
         }
 
-        movingPieceElement!.style.opacity = '1';
+        movingPieceElement!.style.display = 'block';
         movingPieceElement = null;
 
         resetDragState();
@@ -150,14 +181,19 @@
 
     function handleMoveEvent(event: CustomEvent) {
         const { fromRow, fromCol, toRow, toCol } = event.detail;
-        if (content[fromRow][fromCol] === NONE) return;
-        moveGrasoosha(fromRow, fromCol, toRow, toCol);
+        const fromR = parseInt(fromRow);
+        const fromC = parseInt(fromCol);
+        const toR = parseInt(toRow);
+        const toC = parseInt(toCol);
+
+        if (flipped) return moveGrasoosha(6 - fromR, 6 - fromC, 6 - toR, 6 - toC);
+        moveGrasoosha(fromR, fromC, toR, toC);
     }
     
     function handleBoardEvent(event: CustomEvent) {
         const { board } = event.detail;
         content = board;
-        checkJatshie();
+        checkRoles();
     }
 
     onMount(() => {
@@ -177,13 +213,19 @@
     });
 </script>
 
-<div class="shats-board" bind:this={boardElement} role="presentation" style={isDragging ? 'cursor: grabbing;' : ''}>
+<div class="shats-board no-select" bind:this={boardElement} role="presentation" style={isDragging ? 'cursor: grabbing;' : ''}>
 {#each Array(7) as _, i}
     <div class="shats-row">
         {#each Array(7) as _, j}
-            <div class="shats-cell {((i + j) % 2 === 0) ? 'shats-cell-yellow' : 'shats-cell-white'}">
+            <div
+                class="shats-cell"
+                class:shats-cell-yellow={((i + j) % 2 === 0)}
+                class:shats-cell-white={((i + j) % 2 === 1)}
+                class:shats-selected-yellow={draggedFrom && draggedFrom.row === i && draggedFrom.col === j && ((i + j) % 2 === 0)}
+                class:shats-selected-white={draggedFrom && draggedFrom.row === i && draggedFrom.col === j && ((i + j) % 2 === 1)}
+            >
                 {#if content[i][j] !== NONE}
-                    <Grasoosha value={content[i][j]} row={i} col={j} onDragStart={handleDragStart} />
+                    <Grasoosha value={content[i][j]} row={i} col={j} onDragStart={handleDragStart} roles={roles[i][j]} />
                 {/if}
             </div>
         {/each}
@@ -205,6 +247,7 @@
         width: max-content;
         margin: 20px auto;
         position: relative;
+        user-select: none;
     }
 
     .shats-row {
@@ -224,6 +267,14 @@
         background-color: #f7f7f9;
     }
 
+    .shats-selected-yellow {
+        background-color: #71D7D7 !important;
+    }
+
+    .shats-selected-white {
+        background-color: #cefefe !important;
+    }
+
     .floating-piece {
         position: fixed;
         width: 50px;
@@ -231,5 +282,12 @@
         pointer-events: none;
         transform: translate(-25px, -25px);
         z-index: 1000;
+    }
+
+    .no-select {
+        user-select: none;
+        -webkit-user-select: none; /* Safari */
+        -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* IE 10+ */
     }
 </style>
