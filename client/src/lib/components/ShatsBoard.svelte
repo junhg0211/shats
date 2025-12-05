@@ -2,15 +2,8 @@
     import { onMount } from 'svelte';
     import Grasoosha from "./Grasoosha.svelte";
     import { NONE, WHITE_JATSHIE, WHITE_NORMAL, YELLOW_NORMAL, YELLOW_JATSHIE } from "../../../../consts";
-    import nema1 from "$lib/assets/wav/nema1.wav";
-    import nema2 from "$lib/assets/wav/nema2.wav";
-    import nema3 from "$lib/assets/wav/nema3.wav";
-    import nema4 from "$lib/assets/wav/nema4.wav";
-    import nema5 from "$lib/assets/wav/nema5.wav";
 
     export let socket: WebSocket;
-
-    let sounds: HTMLAudioElement[] = [];
 
     let content = [
         [NONE, NONE, NONE, NONE, NONE, NONE, NONE],
@@ -35,22 +28,7 @@
         content = newContent;
     }
 
-    function moveGrasoosha(fromRow: number, fromCol: number, toRow: number, toCol: number) {
-        if (fromRow < 0 || fromRow >= 7 || fromCol < 0 || fromCol >= 7) return;
-        if (toRow < 0 || toRow >= 7 || toCol < 0 || toCol >= 7) return;
-        if (flipped) {
-            fromRow = 6 - fromRow;
-            fromCol = 6 - fromCol;
-            toRow = 6 - toRow;
-            toCol = 6 - toCol;
-        }
-
-        if (content[fromRow][fromCol] !== NONE) {
-            content[toRow][toCol] = content[fromRow][fromCol];
-            content[fromRow][fromCol] = NONE;
-            content = content;
-        }
-
+    function checkJatshie() {
         for (let i = 1; i < 7; i++) {
             for (let j = 0; j < 7; j++) {
                 if (content[i][j] === NONE) continue;
@@ -76,6 +54,25 @@
                 }
             }
         }
+    }
+
+    function moveGrasoosha(fromRow: number, fromCol: number, toRow: number, toCol: number) {
+        if (fromRow < 0 || fromRow >= 7 || fromCol < 0 || fromCol >= 7) return;
+        if (toRow < 0 || toRow >= 7 || toCol < 0 || toCol >= 7) return;
+        if (flipped) {
+            fromRow = 6 - fromRow;
+            fromCol = 6 - fromCol;
+            toRow = 6 - toRow;
+            toCol = 6 - toCol;
+        }
+
+        if (content[fromRow][fromCol] !== NONE) {
+            content[toRow][toCol] = content[fromRow][fromCol];
+            content[fromRow][fromCol] = NONE;
+            content = content;
+        }
+
+        checkJatshie();
     }
 
     let draggedFrom: { row: number; col: number } | null = null;
@@ -153,29 +150,17 @@
 
     function handleMoveEvent(event: CustomEvent) {
         const { fromRow, fromCol, toRow, toCol } = event.detail;
-
-        if (content[fromRow][fromCol] !== NONE) {
-            moveGrasoosha(fromRow, fromCol, toRow, toCol);
-
-            const randomIndex = Math.floor(Math.random() * sounds.length);
-            const sound = sounds[randomIndex];
-            sound.currentTime = 0;
-            sound.play();
-        }
+        if (content[fromRow][fromCol] === NONE) return;
+        moveGrasoosha(fromRow, fromCol, toRow, toCol);
     }
     
     function handleBoardEvent(event: CustomEvent) {
         const { board } = event.detail;
         content = board;
+        checkJatshie();
     }
 
     onMount(() => {
-        sounds = [new Audio(nema1), new Audio(nema2), new Audio(nema3), new Audio(nema4), new Audio(nema5)];
-        for (const sound of sounds) {
-            sound.preload = 'auto'
-            sound.load();
-        }
-        
         window.addEventListener('mousemove', handleWindowMouseMove);
         window.addEventListener('mouseup', handleWindowMouseUp);
         window.addEventListener('dblclick', handleDblClick);
