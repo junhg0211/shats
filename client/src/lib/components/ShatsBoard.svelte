@@ -2,6 +2,13 @@
     import { onMount } from 'svelte';
     import Grasoosha from "./Grasoosha.svelte";
     import { NONE, WHITE_NORMAL, YELLOW_NORMAL } from "$lib/consts";
+    import nema1 from "$lib/assets/wav/nema1.wav";
+    import nema2 from "$lib/assets/wav/nema2.wav";
+    import nema3 from "$lib/assets/wav/nema3.wav";
+    import nema4 from "$lib/assets/wav/nema4.wav";
+    import nema5 from "$lib/assets/wav/nema5.wav";
+
+    let sounds: HTMLAudioElement[] = [];
 
     let content = [
         [NONE, WHITE_NORMAL, WHITE_NORMAL, WHITE_NORMAL, WHITE_NORMAL, WHITE_NORMAL, NONE],
@@ -21,27 +28,25 @@
     let movingPieceElement: HTMLElement | null = null;
 
     function handleDragStart(row: number, col: number, e: DragEvent) {
+        const target = e.target as HTMLElement;
+        target.style.opacity = '0.25';
+        movingPieceElement = target;
+
         draggedFrom = { row, col };
         draggedValue = content[row][col];
         isDragging = true;
-        if (e.target) {
-            const target = e.target as HTMLElement;
-            target.style.opacity = '0.25';
-            movingPieceElement = target;
-        }
 
-        // 드래그 이미지를 투명하게 설정
-        if (e.dataTransfer) {
-            const emptyImage = new Image();
-            e.dataTransfer.setDragImage(emptyImage, 0, 0);
-            e.dataTransfer.effectAllowed = "move";
-        }
+        if (!e.dataTransfer) return;
+
+        const emptyImage = new Image();
+        e.dataTransfer.setDragImage(emptyImage, 0, 0);
+        e.dataTransfer.effectAllowed = "move";
     }
 
     function handleWindowMouseMove(e: MouseEvent) {
-        if (isDragging) {
-            dragPosition = { x: e.clientX, y: e.clientY };
-        }
+        if (!isDragging) return;
+
+        dragPosition = { x: e.clientX, y: e.clientY };
     }
 
     function resetDragState() {
@@ -52,46 +57,39 @@
     }
 
     function handleWindowMouseUp(e: MouseEvent) {
-        if (!isDragging || !draggedFrom) {
-            resetDragState();
-            return;
-        }
-
-        // 마우스 좌표를 기준으로 그리드 셀 찾기
-        if (!boardElement) {
-            resetDragState();
-            return;
-        }
+        if (!isDragging) return resetDragState();
+        if (!draggedFrom) return resetDragState();
+        if (!boardElement) return resetDragState();
 
         const boardRect = boardElement.getBoundingClientRect();
-        const cellSize = 50; // 셀의 크기
+        const cellSize = 50;
 
         const x = e.clientX - boardRect.left;
         const y = e.clientY - boardRect.top;
 
-        // 셀 위치 계산
         const toCol = Math.floor(x / cellSize);
         const toRow = Math.floor(y / cellSize);
 
-        // 유효한 범위인지 확인
-        if (toRow >= 0 && toRow < 7 && toCol >= 0 && toCol < 7) {
-            const fromRow = draggedFrom.row;
-            const fromCol = draggedFrom.col;
+        if (!(toRow >= 0 && toRow < 7 && toCol >= 0 && toCol < 7)) return resetDragState();
 
-            // 같은 위치에 드롭하면 무시
-            if (fromRow !== toRow || fromCol !== toCol) {
-                // 드래그할 수 있는 위치인지 확인 (NONE이 아닌 경우만)
-                if (content[fromRow][fromCol] !== NONE) {
-                    // 말을 이동 (원래 위치는 비워짐)
-                    content[toRow][toCol] = content[fromRow][fromCol];
-                    content[fromRow][fromCol] = NONE;
-                    content = content; // 반응성 업데이트
-                }
-            } else {
-                if (movingPieceElement) {
-                    movingPieceElement.style.opacity = '1';
-                    movingPieceElement = null;
-                }
+        const fromRow = draggedFrom.row;
+        const fromCol = draggedFrom.col;
+
+        if (fromRow !== toRow || fromCol !== toCol) {
+            if (content[fromRow][fromCol] !== NONE) {
+                content[toRow][toCol] = content[fromRow][fromCol];
+                content[fromRow][fromCol] = NONE;
+                content = content;
+
+                const randomIndex = Math.floor(Math.random() * sounds.length);
+                const sound = sounds[randomIndex];
+                sound.currentTime = 0;
+                sound.play();
+            }
+        } else {
+            if (movingPieceElement) {
+                movingPieceElement.style.opacity = '1';
+                movingPieceElement = null;
             }
         }
 
@@ -99,6 +97,12 @@
     }
 
     onMount(() => {
+        sounds = [new Audio(nema1), new Audio(nema2), new Audio(nema3), new Audio(nema4), new Audio(nema5)];
+        for (const sound of sounds) {
+            sound.preload = 'auto'
+            sound.load();
+        }
+        
         window.addEventListener('mousemove', handleWindowMouseMove);
         window.addEventListener('mouseup', handleWindowMouseUp);
 
