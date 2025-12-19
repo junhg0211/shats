@@ -9,3 +9,4 @@ export const ROLE_PYRITS = "P";
 export const ROLE_POTYSIN = "T";
 export const ROLE_LAPACH = "L";
 export const ROLE_JATSHIE = "A";
+export const ROLE_POLUIS = "O";

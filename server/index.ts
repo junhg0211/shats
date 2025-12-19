@@ -1,6 +1,7 @@
 import { connection, server as WebSocketServer } from "websocket";
 import http from "http";
 import { WHITE_NORMAL, YELLOW_NORMAL, NONE, YELLOW_JATSHIE } from "../consts";
+import { checkRole, isLegalMove } from "../shats.js";
 
 const PORT = 48828;
 
@@ -46,6 +47,9 @@ const board = [
   ],
 ];
 
+const moves = [];
+let lastMove = null;
+
 // create an http server
 const server = http.createServer((req, res) => {
   res.writeHead(200);
@@ -89,6 +93,20 @@ const protocols = [
           ? "N"
           : "W";
       if (fromColor === toColor) return;
+
+      const roles = checkRole(board, fromRow, fromCol, false);
+      let legalBy = null;
+      for (const role of roles) {
+        if (isLegalMove(role, fromRow, fromCol, toRow, toCol, board)) {
+          legalBy = role;
+          break;
+        }
+      }
+
+      if (!legalBy) return;
+
+      lastMove = [legalBy, fromCol, fromRow, toCol, toRow];
+      moves.push(lastMove);
 
       board[toRow][toCol] = board[fromRow][fromCol];
       board[fromRow][fromCol] = NONE;
@@ -138,6 +156,10 @@ const protocols = [
       board[6][4] = YELLOW_NORMAL;
       board[6][5] = YELLOW_NORMAL;
 
+      moves.length = 0;
+      lastMove = null;
+
+      announce(`reset`);
       announce(`board\t${JSON.stringify(board)}`);
     },
   },

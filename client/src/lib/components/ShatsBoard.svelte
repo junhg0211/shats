@@ -1,18 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import Grasoosha from "./Grasoosha.svelte";
-  import {
-    NONE,
-    WHITE_JATSHIE,
-    WHITE_NORMAL,
-    YELLOW_NORMAL,
-    YELLOW_JATSHIE,
-    ROLE_LAPACH,
-    ROLE_POTYSIN,
-    ROLE_PYRITS,
-    ROLE_HADRIV,
-    ROLE_JATSHIE,
-  } from "../../../../consts";
+  import { NONE } from "../../../../consts";
+  import { checkRoles } from "../../../../shats";
 
   export let socket: WebSocket | null = null;
 
@@ -30,12 +20,6 @@
     .fill(null)
     .map(() => Array(7).fill([]));
 
-  function setFlipped(value: boolean) {
-    if (flipped !== value) {
-      flipBoard();
-    }
-  }
-
   function flipBoard() {
     flipped = !flipped;
 
@@ -49,96 +33,7 @@
     }
     content = newContent;
 
-    checkRoles();
-  }
-
-  function checkRoles() {
-    for (let i = 0; i < 7; i++) {
-      for (let j = 0; j < 7; j++) {
-        roles[i][j] = [];
-        if (content[i][j] === NONE) continue;
-
-        // JATSHIE
-        const color =
-          content[i][j] === WHITE_NORMAL || content[i][j] === WHITE_JATSHIE
-            ? "W"
-            : "Y";
-
-        let diagonalNeighbors = 0;
-        const directions = [
-          [-1, -1],
-          [-1, 1],
-          [1, -1],
-          [1, 1],
-        ];
-        for (const [dx, dy] of directions) {
-          const ni = i + dx;
-          const nj = j + dy;
-          if (ni < 0 || ni >= 7 || nj < 0 || nj >= 7) continue;
-          if (content[ni][nj] === NONE) continue;
-          const neighborColor =
-            content[ni][nj] === WHITE_NORMAL ||
-            content[ni][nj] === WHITE_JATSHIE
-              ? "W"
-              : "Y";
-          if (neighborColor !== color) continue;
-          diagonalNeighbors++;
-        }
-
-        if (diagonalNeighbors >= 3) {
-          content[i][j] = color === "W" ? WHITE_JATSHIE : YELLOW_JATSHIE;
-          roles[i][j].push(ROLE_JATSHIE);
-        } else {
-          content[i][j] = color === "W" ? WHITE_NORMAL : YELLOW_NORMAL;
-        }
-
-        // LAPACH
-        if (
-          !flipped &&
-          ((color === "Y" && i < 3) || (color === "W" && i > 3))
-        ) {
-          roles[i][j].push(ROLE_LAPACH);
-        }
-        if (flipped && ((color === "Y" && i > 3) || (color === "W" && i < 3))) {
-          roles[i][j].push(ROLE_LAPACH);
-        }
-
-        // POTYSIN
-        let orthoNeighbors = 0;
-        const orthoDirections = [
-          [-1, 0],
-          [1, 0],
-          [0, -1],
-          [0, 1],
-        ];
-        for (const [dx, dy] of orthoDirections) {
-          const ni = i + dx;
-          const nj = j + dy;
-          if (ni < 0 || ni >= 7 || nj < 0 || nj >= 7) continue;
-          if (content[ni][nj] === NONE) continue;
-          const neighborColor =
-            content[ni][nj] === WHITE_NORMAL ||
-            content[ni][nj] === WHITE_JATSHIE
-              ? "W"
-              : "Y";
-          if (neighborColor !== color) continue;
-          orthoNeighbors++;
-        }
-        if (orthoNeighbors + diagonalNeighbors >= 3) {
-          roles[i][j].push(ROLE_POTYSIN);
-        }
-
-        // PYRITS
-        if (i === 0 || i === 6 || j === 0 || j === 6) {
-          roles[i][j].push(ROLE_PYRITS);
-        }
-
-        // HADRIV
-        if (orthoNeighbors >= 1) {
-          roles[i][j].push(ROLE_HADRIV);
-        }
-      }
-    }
+    roles = checkRoles(content, roles, flipped);
   }
 
   function moveGrasoosha(
@@ -153,7 +48,7 @@
     content[toRow][toCol] = content[fromRow][fromCol];
     content[fromRow][fromCol] = NONE;
     content = content;
-    checkRoles();
+    roles = checkRoles(content, roles, flipped);
   }
 
   let draggedFrom: { row: number; col: number } | null = null;
@@ -275,12 +170,14 @@
   function handleBoardEvent(event: CustomEvent) {
     const { board } = event.detail;
     content = board;
-    checkRoles();
+    roles = checkRoles(content, roles, flipped);
   }
 
   function handleFlipChanged(e: CustomEvent<{ flipped: boolean }>) {
     e.detail.flipped !== flipped && flipBoard();
   }
+
+  function handleResetEvent(e: CustomEvent) {}
 
   onMount(() => {
     window.addEventListener("mousemove", handleWindowMouseMove);
@@ -290,6 +187,7 @@
     window.addEventListener("move", handleMoveEvent as EventListener);
     window.addEventListener("board", handleBoardEvent as EventListener);
     window.addEventListener("flipchanged", handleFlipChanged as EventListener);
+    window.addEventListener("reset", handleResetEvent as EventListener);
 
     return () => {
       window.removeEventListener("mousemove", handleWindowMouseMove);
@@ -302,6 +200,7 @@
         "flipchanged",
         handleFlipChanged as EventListener,
       );
+      window.removeEventListener("reset", handleResetEvent as EventListener);
     };
   });
 </script>

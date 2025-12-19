@@ -41,6 +41,14 @@
         window.dispatchEvent(boardEvent);
       },
     },
+    {
+      prefix: "reset",
+      handler: (connection: WebSocket, args: string[]) => {
+        // Handle the reset logic here
+        const resetEvent = new CustomEvent("reset");
+        window.dispatchEvent(resetEvent);
+      },
+    },
   ];
 
   function resetBoard() {
