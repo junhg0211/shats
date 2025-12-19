@@ -49,6 +49,7 @@
     content[fromRow][fromCol] = NONE;
     content = content;
     roles = checkRoles(content, roles, flipped);
+    lastMove = { fromRow, fromCol, toRow, toCol };
   }
 
   let draggedFrom: { row: number; col: number } | null = null;
@@ -57,6 +58,7 @@
   let draggedValue = "";
   let boardElement: HTMLElement;
   let movingPieceElement: HTMLElement | null = null;
+  let lastMove = { fromRow: -1, fromCol: -1, toRow: -1, toCol: -1 };
 
   function handleDragStart(row: number, col: number, e: DragEvent) {
     const target = e.target as HTMLElement;
@@ -177,7 +179,14 @@
     e.detail.flipped !== flipped && flipBoard();
   }
 
-  function handleResetEvent(e: CustomEvent) {}
+  function handleLastMoveEvent(e: CustomEvent) {
+    const { lastMove: newLastMove } = e.detail;
+    if (newLastMove === null) {
+      lastMove = { fromRow: -1, fromCol: -1, toRow: -1, toCol: -1 };
+    } else {
+      lastMove = newLastMove;
+    }
+  }
 
   onMount(() => {
     window.addEventListener("mousemove", handleWindowMouseMove);
@@ -187,7 +196,7 @@
     window.addEventListener("move", handleMoveEvent as EventListener);
     window.addEventListener("board", handleBoardEvent as EventListener);
     window.addEventListener("flipchanged", handleFlipChanged as EventListener);
-    window.addEventListener("reset", handleResetEvent as EventListener);
+    window.addEventListener("lastmove", handleLastMoveEvent as EventListener);
 
     return () => {
       window.removeEventListener("mousemove", handleWindowMouseMove);
@@ -200,7 +209,10 @@
         "flipchanged",
         handleFlipChanged as EventListener,
       );
-      window.removeEventListener("reset", handleResetEvent as EventListener);
+      window.removeEventListener(
+        "lastmove",
+        handleLastMoveEvent as EventListener,
+      );
     };
   });
 </script>
@@ -218,14 +230,14 @@
           class="shats-cell"
           class:shats-cell-yellow={(i + j) % 2 === 0}
           class:shats-cell-white={(i + j) % 2 === 1}
-          class:shats-selected-yellow={draggedFrom &&
-            draggedFrom.row === i &&
-            draggedFrom.col === j &&
-            (i + j) % 2 === 0}
-          class:shats-selected-white={draggedFrom &&
-            draggedFrom.row === i &&
-            draggedFrom.col === j &&
-            (i + j) % 2 === 1}
+          class:shats-selected-yellow={(i + j) % 2 === 0 &&
+            ((draggedFrom && draggedFrom.row === i && draggedFrom.col === j) ||
+              (lastMove.fromRow === i && lastMove.fromCol === j) ||
+              (lastMove.toRow === i && lastMove.toCol === j))}
+          class:shats-selected-white={(i + j) % 2 === 1 &&
+            ((draggedFrom && draggedFrom.row === i && draggedFrom.col === j) ||
+              (lastMove.fromRow === i && lastMove.fromCol === j) ||
+              (lastMove.toRow === i && lastMove.toCol === j))}
         >
           {#if content[i][j] !== NONE}
             <Grasoosha

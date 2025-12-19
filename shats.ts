@@ -135,8 +135,30 @@ export function isLegalMove(
   }
 
   if (role === ROLE_LAPACH) {
-    if (rowDiffAbs === 0 || colDiffAbs === 0) return true;
+    if (rowDiffAbs === 0) {
+      for (
+        let c = Math.min(fromCol, toCol) + 1;
+        c < Math.max(fromCol, toCol);
+        c++
+      ) {
+        if (board[fromRow][c] !== NONE) return false;
+      }
+      return true;
+    }
+
+    if (colDiffAbs === 0) {
+      for (
+        let r = Math.min(fromRow, toRow) + 1;
+        r < Math.max(fromRow, toRow);
+        r++
+      ) {
+        if (board[r][fromCol] !== NONE) return false;
+      }
+      return true;
+    }
+
     if (rowDiffAbs === 1 && colDiffAbs === 1) return true;
+
     return false;
   }
 
@@ -153,48 +175,62 @@ export function isLegalMove(
     return false;
   }
 
+  const color =
+    board[fromRow][fromCol] === YELLOW_NORMAL ||
+    board[fromRow][fromCol] === YELLOW_JATSHIE
+      ? "Y"
+      : "W";
+
   if (role === ROLE_HADRIV) {
-    if (
+    const allyColorDown =
+      board[fromRow + 1] &&
       (board[fromRow + 1][fromCol] === YELLOW_NORMAL ||
-        board[fromRow + 1][fromCol] === YELLOW_JATSHIE) &&
-      rowDiff === 2 &&
-      colDiffAbs === 1
-    )
-      return true;
+        board[fromRow + 1][fromCol] === YELLOW_JATSHIE)
+        ? "Y"
+        : "W";
 
-    if (
+    const allyColorUp =
+      board[fromRow - 1] &&
       (board[fromRow - 1][fromCol] === YELLOW_NORMAL ||
-        board[fromRow - 1][fromCol] === YELLOW_JATSHIE) &&
-      rowDiff === -2 &&
-      colDiffAbs === 1
-    )
-      return true;
+        board[fromRow - 1][fromCol] === YELLOW_JATSHIE)
+        ? "Y"
+        : "W";
 
-    if (
+    const allyColorRight =
+      board[fromRow][fromCol + 1] &&
       (board[fromRow][fromCol + 1] === YELLOW_NORMAL ||
-        board[fromRow][fromCol + 1] === YELLOW_JATSHIE) &&
-      colDiff === 2 &&
-      rowDiffAbs === 1
-    )
-      return true;
+        board[fromRow][fromCol + 1] === YELLOW_JATSHIE)
+        ? "Y"
+        : "W";
 
-    if (
+    const allyColorLeft =
+      board[fromRow][fromCol - 1] &&
       (board[fromRow][fromCol - 1] === YELLOW_NORMAL ||
-        board[fromRow][fromCol - 1] === YELLOW_JATSHIE) &&
-      colDiff === -2 &&
-      rowDiffAbs === 1
-    )
-      return true;
+        board[fromRow][fromCol - 1] === YELLOW_JATSHIE)
+        ? "Y"
+        : "W";
 
-    return false;
+    return (
+      (board[fromRow + 1] !== undefined &&
+        allyColorDown === color &&
+        rowDiff === 2 &&
+        colDiffAbs === 1) ||
+      (board[fromRow - 1] !== undefined &&
+        allyColorUp === color &&
+        rowDiff === -2 &&
+        colDiffAbs === 1) ||
+      (board[fromRow][fromCol + 1] !== undefined &&
+        allyColorRight === color &&
+        colDiff === 2 &&
+        rowDiffAbs === 1) ||
+      (board[fromRow][fromCol - 1] !== undefined &&
+        allyColorLeft === color &&
+        colDiff === -2 &&
+        rowDiffAbs === 1)
+    );
   }
 
   if (role === ROLE_POLUIS) {
-    const color =
-      board[fromRow][fromCol] === YELLOW_NORMAL ||
-      board[fromRow][fromCol] === YELLOW_JATSHIE
-        ? "Y"
-        : "W";
     if (color === "Y" && rowDiff === -1 && colDiff === 0) return true;
     if (color === "W" && rowDiff === 1 && colDiff === 0) return true;
     return false;

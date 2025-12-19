@@ -42,11 +42,16 @@
       },
     },
     {
-      prefix: "reset",
+      prefix: "lastmove",
       handler: (connection: WebSocket, args: string[]) => {
-        // Handle the reset logic here
-        const resetEvent = new CustomEvent("reset");
-        window.dispatchEvent(resetEvent);
+        const [rawLastMove] = args;
+        const lastMove = JSON.parse(rawLastMove);
+
+        // Handle the last move update logic here
+        const lastMoveEvent = new CustomEvent("lastmove", {
+          detail: { lastMove },
+        });
+        window.dispatchEvent(lastMoveEvent);
       },
     },
   ];
