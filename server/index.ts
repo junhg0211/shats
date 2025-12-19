@@ -102,6 +102,45 @@ const protocols = [
       connection.sendUTF(`board\t${JSON.stringify(board)}`);
     },
   },
+  {
+    prefix: "reset",
+    handler: (connection: connection, args: string[]) => {
+      for (let r = 0; r < 7; r++) {
+        for (let c = 0; c < 7; c++) {
+          board[r][c] = NONE;
+        }
+      }
+      board[0][1] = WHITE_NORMAL;
+      board[0][2] = WHITE_NORMAL;
+      board[0][3] = WHITE_NORMAL;
+      board[0][4] = WHITE_NORMAL;
+      board[0][5] = WHITE_NORMAL;
+
+      board[1][0] = WHITE_NORMAL;
+      board[1][1] = WHITE_NORMAL;
+      board[1][2] = WHITE_NORMAL;
+      board[1][3] = WHITE_NORMAL;
+      board[1][4] = WHITE_NORMAL;
+      board[1][5] = WHITE_NORMAL;
+      board[1][6] = WHITE_NORMAL;
+
+      board[5][0] = YELLOW_NORMAL;
+      board[5][1] = YELLOW_NORMAL;
+      board[5][2] = YELLOW_NORMAL;
+      board[5][3] = YELLOW_NORMAL;
+      board[5][4] = YELLOW_NORMAL;
+      board[5][5] = YELLOW_NORMAL;
+      board[5][6] = YELLOW_NORMAL;
+
+      board[6][1] = YELLOW_NORMAL;
+      board[6][2] = YELLOW_NORMAL;
+      board[6][3] = YELLOW_NORMAL;
+      board[6][4] = YELLOW_NORMAL;
+      board[6][5] = YELLOW_NORMAL;
+
+      announce(`board\t${JSON.stringify(board)}`);
+    },
+  },
 ];
 
 server.listen(PORT, () => {

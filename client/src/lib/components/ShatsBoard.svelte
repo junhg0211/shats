@@ -139,7 +139,7 @@
     fromRow: number,
     fromCol: number,
     toRow: number,
-    toCol: number
+    toCol: number,
   ) {
     if (fromRow < 0 || fromRow >= 7 || fromCol < 0 || fromCol >= 7) return;
     if (toRow < 0 || toRow >= 7 || toCol < 0 || toCol >= 7) return;
@@ -168,15 +168,24 @@
 
     if (!e.dataTransfer) return;
 
-    const emptyImage = new Image();
-    e.dataTransfer.setDragImage(emptyImage, 0, 0);
+    const transparentPixel = new Image();
+    transparentPixel.src =
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9W3gU5kAAAAASUVORK5CYII=";
+    e.dataTransfer.setDragImage(transparentPixel, 0, 0);
     e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", "dragging");
   }
 
   function handleWindowMouseMove(e: MouseEvent) {
     if (!isDragging) return;
 
     dragPosition = { x: e.clientX, y: e.clientY };
+  }
+
+  function handleWindowDragOver(e: DragEvent) {
+    if (!isDragging) return;
+    dragPosition = { x: e.clientX, y: e.clientY };
+    e.preventDefault();
   }
 
   function resetDragState() {
@@ -213,7 +222,7 @@
       if (socket && socket.readyState === WebSocket.OPEN) {
         if (flipped) {
           socket.send(
-            `move\t${6 - fromRow}\t${6 - fromCol}\t${6 - toRow}\t${6 - toCol}`
+            `move\t${6 - fromRow}\t${6 - fromCol}\t${6 - toRow}\t${6 - toCol}`,
           );
         } else {
           socket.send(`move\t${fromRow}\t${fromCol}\t${toRow}\t${toCol}`);
@@ -228,10 +237,22 @@
       }
     }
 
-    movingPieceElement!.style.display = "block";
-    movingPieceElement = null;
+    if (movingPieceElement) {
+      movingPieceElement.style.display = "block";
+      movingPieceElement = null;
+    }
 
     resetDragState();
+  }
+
+  // Ensure drag ends cleanly when the HTML5 DnD session finishes
+  function handleWindowDragEnd(e: DragEvent) {
+    // Use the last tracked position to finish the drag like mouseup
+    const fakeMouseUp = new MouseEvent("mouseup", {
+      clientX: dragPosition.x,
+      clientY: dragPosition.y,
+    });
+    handleWindowMouseUp(fakeMouseUp);
   }
 
   function handleDblClick() {
@@ -258,13 +279,17 @@
   onMount(() => {
     window.addEventListener("mousemove", handleWindowMouseMove);
     window.addEventListener("mouseup", handleWindowMouseUp);
+    window.addEventListener("dragover", handleWindowDragOver);
+    window.addEventListener("dragend", handleWindowDragEnd);
     window.addEventListener("dblclick", handleDblClick);
     window.addEventListener("move", handleMoveEvent as EventListener);
     window.addEventListener("board", handleBoardEvent as EventListener);
 
     return () => {
       window.removeEventListener("mousemove", handleWindowMouseMove);
+      window.removeEventListener("dragover", handleWindowDragOver);
       window.removeEventListener("mouseup", handleWindowMouseUp);
+      window.removeEventListener("dragend", handleWindowDragEnd);
       window.removeEventListener("dblclick", handleDblClick);
       window.removeEventListener("move", handleMoveEvent as EventListener);
       window.removeEventListener("board", handleBoardEvent as EventListener);

@@ -43,6 +43,17 @@
     },
   ];
 
+  function resetBoard() {
+    if (!socket) return;
+
+    const confirmation = window.confirm(
+      "정말로 보드를 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+    );
+    if (!confirmation) return;
+
+    socket.send("reset");
+  }
+
   onMount(() => {
     try {
       socket = new WebSocket("ws://sch.shtelo.org:48828");
@@ -74,8 +85,11 @@
 </script>
 
 <div class="page-container">
-  <ShatsBoard {socket} />
   <div class="sidebar">Hello, world!</div>
+  <ShatsBoard {socket} />
+  <div class="sidebar">
+    <button on:click={resetBoard}>Reset</button>
+  </div>
 </div>
 
 <style>
@@ -90,6 +104,6 @@
   .sidebar {
     border: 2px solid #19191e;
     height: 350px;
-    margin-left: 12px;
+    margin: 0 12px;
   }
 </style>
