@@ -5,13 +5,45 @@ import { WHITE_NORMAL, YELLOW_NORMAL, NONE, YELLOW_JATSHIE } from "../consts";
 const PORT = 48828;
 
 const board = [
-  [NONE, WHITE_NORMAL, WHITE_NORMAL, WHITE_NORMAL, WHITE_NORMAL, WHITE_NORMAL, NONE],
-  [WHITE_NORMAL, WHITE_NORMAL, WHITE_NORMAL, WHITE_NORMAL, WHITE_NORMAL, WHITE_NORMAL, WHITE_NORMAL],
+  [
+    NONE,
+    WHITE_NORMAL,
+    WHITE_NORMAL,
+    WHITE_NORMAL,
+    WHITE_NORMAL,
+    WHITE_NORMAL,
+    NONE,
+  ],
+  [
+    WHITE_NORMAL,
+    WHITE_NORMAL,
+    WHITE_NORMAL,
+    WHITE_NORMAL,
+    WHITE_NORMAL,
+    WHITE_NORMAL,
+    WHITE_NORMAL,
+  ],
   [NONE, NONE, NONE, NONE, NONE, NONE, NONE],
   [NONE, NONE, NONE, NONE, NONE, NONE, NONE],
   [NONE, NONE, NONE, NONE, NONE, NONE, NONE],
-  [YELLOW_NORMAL, YELLOW_NORMAL, YELLOW_NORMAL, YELLOW_NORMAL, YELLOW_NORMAL, YELLOW_NORMAL, YELLOW_NORMAL],
-  [NONE, YELLOW_NORMAL, YELLOW_NORMAL, YELLOW_NORMAL, YELLOW_NORMAL, YELLOW_NORMAL, NONE],
+  [
+    YELLOW_NORMAL,
+    YELLOW_NORMAL,
+    YELLOW_NORMAL,
+    YELLOW_NORMAL,
+    YELLOW_NORMAL,
+    YELLOW_NORMAL,
+    YELLOW_NORMAL,
+  ],
+  [
+    NONE,
+    YELLOW_NORMAL,
+    YELLOW_NORMAL,
+    YELLOW_NORMAL,
+    YELLOW_NORMAL,
+    YELLOW_NORMAL,
+    NONE,
+  ],
 ];
 
 // create an http server
@@ -41,24 +73,36 @@ const protocols = [
       if (fromRow < 0 || fromRow >= 7 || fromCol < 0 || fromCol >= 7) return;
       if (toRow < 0 || toRow >= 7 || toCol < 0 || toCol >= 7) return;
       if (board[fromRow][fromCol] === NONE) return;
-      
-      const fromColor = board[fromRow][fromCol] === YELLOW_NORMAL || board[fromRow][fromCol] === YELLOW_JATSHIE ? "Y" : board[fromRow][fromCol] === NONE ? "N" : "W";
-      const toColor = board[toRow][toCol] === YELLOW_NORMAL || board[toRow][toCol] === YELLOW_JATSHIE ? "Y" : board[toRow][toCol] === NONE ? "N" : "W";
+
+      const fromColor =
+        board[fromRow][fromCol] === YELLOW_NORMAL ||
+        board[fromRow][fromCol] === YELLOW_JATSHIE
+          ? "Y"
+          : board[fromRow][fromCol] === NONE
+          ? "N"
+          : "W";
+      const toColor =
+        board[toRow][toCol] === YELLOW_NORMAL ||
+        board[toRow][toCol] === YELLOW_JATSHIE
+          ? "Y"
+          : board[toRow][toCol] === NONE
+          ? "N"
+          : "W";
       if (fromColor === toColor) return;
 
       board[toRow][toCol] = board[fromRow][fromCol];
       board[fromRow][fromCol] = NONE;
-      
+
       announce(`move\t${fromRow}\t${fromCol}\t${toRow}\t${toCol}`);
-    }
+    },
   },
   {
     prefix: "load",
     handler: (connection: connection, args: string[]) => {
       connection.sendUTF(`board\t${JSON.stringify(board)}`);
-    }
-  }
-]
+    },
+  },
+];
 
 server.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
@@ -89,8 +133,6 @@ wsServer.on("request", (request) => {
   });
 
   connection.on("close", (reasonCode, description) => {
-    console.log(
-      `WebSocket connection closed: ${reasonCode} - ${description}`
-    );
+    console.log(`WebSocket connection closed: ${reasonCode} - ${description}`);
   });
 });
