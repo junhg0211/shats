@@ -25,10 +25,16 @@
     [NONE, NONE, NONE, NONE, NONE, NONE, NONE],
     [NONE, NONE, NONE, NONE, NONE, NONE, NONE],
   ];
-  let flipped = false;
+  export let flipped = false;
   let roles: string[][][] = Array(7)
     .fill(null)
     .map(() => Array(7).fill([]));
+
+  function setFlipped(value: boolean) {
+    if (flipped !== value) {
+      flipBoard();
+    }
+  }
 
   function flipBoard() {
     flipped = !flipped;
@@ -255,10 +261,6 @@
     handleWindowMouseUp(fakeMouseUp);
   }
 
-  function handleDblClick() {
-    flipBoard();
-  }
-
   function handleMoveEvent(event: CustomEvent) {
     const { fromRow, fromCol, toRow, toCol } = event.detail;
     const fromR = parseInt(fromRow);
@@ -276,23 +278,30 @@
     checkRoles();
   }
 
+  function handleFlipChanged(e: CustomEvent<{ flipped: boolean }>) {
+    e.detail.flipped !== flipped && flipBoard();
+  }
+
   onMount(() => {
     window.addEventListener("mousemove", handleWindowMouseMove);
     window.addEventListener("mouseup", handleWindowMouseUp);
     window.addEventListener("dragover", handleWindowDragOver);
     window.addEventListener("dragend", handleWindowDragEnd);
-    window.addEventListener("dblclick", handleDblClick);
     window.addEventListener("move", handleMoveEvent as EventListener);
     window.addEventListener("board", handleBoardEvent as EventListener);
+    window.addEventListener("flipchanged", handleFlipChanged as EventListener);
 
     return () => {
       window.removeEventListener("mousemove", handleWindowMouseMove);
       window.removeEventListener("dragover", handleWindowDragOver);
       window.removeEventListener("mouseup", handleWindowMouseUp);
       window.removeEventListener("dragend", handleWindowDragEnd);
-      window.removeEventListener("dblclick", handleDblClick);
       window.removeEventListener("move", handleMoveEvent as EventListener);
       window.removeEventListener("board", handleBoardEvent as EventListener);
+      window.removeEventListener(
+        "flipchanged",
+        handleFlipChanged as EventListener,
+      );
     };
   });
 </script>

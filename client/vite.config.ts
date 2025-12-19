@@ -6,4 +6,10 @@ export default defineConfig({
   server: {
     allowedHosts: ["sch.shtelo.org"],
   },
+  optimizeDeps: {
+    exclude: ["fsevents"],
+  },
+  ssr: {
+    external: ["fsevents"],
+  },
 });

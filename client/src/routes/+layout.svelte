@@ -1,6 +1,5 @@
 <script lang="ts">
   import favicon from "$lib/assets/favicon.svg";
-  import { NONE, WHITE_JATSHIE } from "../../../consts";
 
   let { children } = $props();
 </script>
@@ -17,17 +16,38 @@
 
     button {
       font-family: inherit;
+      font-size: 1rem;
       cursor: pointer;
       background-color: white;
       padding: 8px 16px;
       border: NONE;
       border-radius: 4px;
       transition:
-        background-color 0.3s,
-        color 0.3s;
+        background-color 0.2s,
+        color 0.2s;
     }
 
     button:hover {
+      background-color: #19191e;
+      color: white;
+    }
+
+    /* span > checkbox + label, look alike toggle button */
+    span > input[type="checkbox"] {
+      display: none;
+    }
+
+    span > input[type="checkbox"] + label {
+      position: relative;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.2s;
+      box-sizing: border-box;
+      padding: 8px 16px;
+      border-radius: 4px;
+    }
+
+    span > input[type="checkbox"]:checked + label {
       background-color: #19191e;
       color: white;
     }

@@ -82,14 +82,28 @@
       socket = null;
     }
   });
+
+  function envokeFlipChangedEvent(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const flipEvent = new CustomEvent("flipchanged", {
+      detail: {
+        flipped: input.checked,
+      },
+    });
+    window.dispatchEvent(flipEvent);
+  }
 </script>
 
 <div class="page-container">
-  <div class="sidebar">Hello, world!</div>
-  <ShatsBoard {socket} />
   <div class="sidebar">
     <button on:click={resetBoard}>Reset</button>
+    <span>
+      <input type="checkbox" id="flip" on:change={envokeFlipChangedEvent} />
+      <label for="flip">Flip</label>
+    </span>
   </div>
+  <ShatsBoard {socket} />
+  <div class="sidebar">Hello, world!</div>
 </div>
 
 <style>
