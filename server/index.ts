@@ -47,8 +47,26 @@ const board = [
   ],
 ];
 
-const moves = [];
-let lastMove = {}; // [role, fromCol, fromRow, toCol, toRow, capturedPiece, check, checkmate]
+const moves: {
+  role: string;
+  fromCol: number;
+  fromRow: number;
+  toCol: number;
+  toRow: number;
+  capturedPiece: string;
+  moveCode: string;
+  player: string;
+}[] = [];
+let lastMove: {
+  role: string;
+  fromCol: number;
+  fromRow: number;
+  toCol: number;
+  toRow: number;
+  capturedPiece: string;
+  moveCode: string;
+  player: string;
+} | null = null;
 
 // create an http server
 const server = http.createServer((req, res) => {
@@ -112,6 +130,10 @@ const protocols = [
         toCol,
         toRow,
         capturedPiece: board[toRow][toCol],
+        moveCode: `${legalBy}${fromRow}${fromCol}${
+          board[toRow][toCol] !== NONE ? "x" : ""
+        }${toRow}${toCol}`,
+        player: fromColor,
       };
       moves.push(lastMove);
 
@@ -170,6 +192,12 @@ const protocols = [
 
       announce(`board\t${JSON.stringify(board)}`);
       announce(`lastmove\t${JSON.stringify(lastMove)}`);
+    },
+  },
+  {
+    prefix: "moves",
+    handler: (connection: connection, args: string[]) => {
+      connection.sendUTF(`moves\t${JSON.stringify(moves)}`);
     },
   },
 ];

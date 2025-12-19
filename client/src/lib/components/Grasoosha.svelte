@@ -4,6 +4,7 @@
     YELLOW_NORMAL,
     WHITE_JATSHIE,
     YELLOW_JATSHIE,
+    ROLE_POLUIS,
   } from "../../../../consts";
 
   export let value: string;
@@ -13,7 +14,7 @@
   export let onDragStart: (
     row: number,
     col: number,
-    e: DragEvent
+    e: DragEvent,
   ) => void = () => {};
 
   function handleDragStart(e: DragEvent) {
@@ -32,10 +33,12 @@
     role="button"
     tabindex="0"
   ></div>
-  {#if roles && roles.length > 0}
+  {#if roles && roles.length > 1}
     <div class="roles">
       {#each roles as role}
-        <span>{role}</span>
+        {#if role !== ROLE_POLUIS}
+          <span>{role}</span>
+        {/if}
       {/each}
     </div>
   {/if}

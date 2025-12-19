@@ -24,6 +24,7 @@
           },
         });
         window.dispatchEvent(moveEvent);
+        socket?.send("moves");
       },
     },
     {
@@ -39,6 +40,7 @@
           },
         });
         window.dispatchEvent(boardEvent);
+        socket?.send("moves");
       },
     },
     {
@@ -54,7 +56,21 @@
         window.dispatchEvent(lastMoveEvent);
       },
     },
+    {
+      prefix: "moves",
+      handler: (connection: WebSocket, args: string[]) => {
+        const [rawMoves] = args;
+        moves = JSON.parse(rawMoves);
+      },
+    },
   ];
+
+  let moves: {
+    fromRow: number;
+    fromCol: number;
+    toRow: number;
+    toCol: number;
+  }[] = [];
 
   function resetBoard() {
     if (!socket) return;
@@ -84,6 +100,7 @@
 
       socket.onopen = () => {
         socket!.send("load");
+        socket!.send("moves");
       };
 
       socket.onerror = () => {
@@ -116,7 +133,13 @@
     </span>
   </div>
   <ShatsBoard {socket} />
-  <div class="sidebar">Hello, world!</div>
+  <div class="sidebar">
+    {#each moves as move}
+      <div>
+        From ({move.fromRow}, {move.fromCol}) to ({move.toRow}, {move.toCol})
+      </div>
+    {/each}
+  </div>
 </div>
 
 <style>
@@ -132,5 +155,6 @@
     border: 2px solid #19191e;
     height: 350px;
     margin: 0 12px;
+    min-width: 200px;
   }
 </style>
